@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # -----------------------------------------------------------------------------
-# [중요] st.set_page_config는 반드시 파일 최상단(다른 st 명령어 전)에 와야 합니다.
+# [필수] st.set_page_config는 최상단에 위치합니다.
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="춘향전 어휘 탐구 학습지",
@@ -23,13 +23,13 @@ st.markdown("""
         text-align: center;
         font-size: 1rem;
         color: #7f8c8d;
-        margin-bottom: 20px;
+        margin-bottom: 25px;
     }
     </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">📜 춘향전 단어 찾아 쓰기 학습지</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">중학교 2학년 국어 | 본문을 읽고 뜻풀이에 맞는 단어를 입력해 보세요.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">중학교 2학년 국어 | 본문을 읽고 뜻풀이에 맞는 알맞은 단어를 써봅시다.</div>', unsafe_allow_html=True)
 
 # 27개 어휘 데이터
 vocab_data = [
@@ -62,68 +62,59 @@ vocab_data = [
     {"번호": 27, "단어": "하직하다", "뜻풀이": "서울을 떠나는 벼슬아치가 임금에게 작별을 아뢰다."}
 ]
 
-df = pd.DataFrame(vocab_data)
+# 사용자의 입력값을 저장하기 위한 세션 상태
+if 'user_answers' not in st.session_state:
+    st.session_state.user_answers = {}
 
-# 사이드바 모드선택
-st.sidebar.header("⚙️ 모드 선택")
-mode = st.sidebar.radio("원하는 모드를 선택하세요:", ["📖 전체 단어장 (정답 포함)", "✍️ 퀴즈 / 빈칸 채우기"])
+# 바로 빈칸 퀴즈 화면 띄우기
+st.subheader("✍️ 뜻풀이를 읽고 알맞은 단어를 빈칸에 작성하세요.")
+st.write("---")
 
-# 모드 1: 정답 표 출력
-if mode == "📖 전체 단어장 (정답 포함)":
-    st.info("💡 춘향전 단어 27개의 정답과 뜻풀이 목록입니다.")
-    st.dataframe(df, hide_index=True, use_container_width=True)
-
-# 모드 2: 빈칸 퀴즈 및 자동 채점
-else:
-    st.subheader("✍️ 뜻풀이를 읽고 단어를 적어보세요.")
+with st.form(key="quiz_form"):
+    for item in vocab_data:
+        idx = item["번호"]
+        meaning = item["뜻풀이"]
+        
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.markdown(f"**{idx}.** {meaning}")
+        with col2:
+            st.session_state.user_answers[idx] = st.text_input(
+                f"입력_{idx}", 
+                key=f"input_{idx}", 
+                label_visibility="collapsed",
+                placeholder="단어 입력"
+            )
+        st.divider()
     
-    if 'user_answers' not in st.session_state:
-        st.session_state.user_answers = {}
-    
-    with st.form(key="quiz_form"):
-        for item in vocab_data:
-            idx = item["번호"]
-            meaning = item["뜻풀이"]
-            
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"**{idx}.** {meaning}")
-            with col2:
-                st.session_state.user_answers[idx] = st.text_input(
-                    f"입력_{idx}", 
-                    key=f"input_{idx}", 
-                    label_visibility="collapsed",
-                    placeholder="단어 작성"
-                )
-            st.divider()
-        
-        submit_btn = st.form_submit_button(label="💯 정답 제출 및 채점하기")
+    submit_btn = st.form_submit_button(label="💯 정답 제출 및 채점하기")
 
-    if submit_btn:
-        score = 0
-        total = len(vocab_data)
-        
-        for item in vocab_data:
-            idx = item["번호"]
-            correct = item["단어"].strip()
-            user_input = st.session_state.user_answers.get(idx, "").strip()
-            if user_input == correct:
-                score += 1
-                
-        st.success(f"🎉 채점 결과: {score} / {total} 점 완료!")
-        
-        results = []
-        for item in vocab_data:
-            idx = item["번호"]
-            correct = item["단어"]
-            user_input = st.session_state.user_answers.get(idx, "").strip()
-            status = "✅ 정답" if user_input == correct else f"❌ 오답 (정답: {correct})"
-            results.append({
-                "번호": idx,
-                "뜻풀이": item["뜻풀이"],
-                "내가 입력한 답": user_input if user_input else "(미입력)",
-                "결과": status
-            })
+# 채점 결과 출력
+if submit_btn:
+    score = 0
+    total = len(vocab_data)
+    
+    for item in vocab_data:
+        idx = item["번호"]
+        correct = item["단어"].strip()
+        user_input = st.session_state.user_answers.get(idx, "").strip()
+        if user_input == correct:
+            score += 1
             
-        st.subheader("📋 상세 채점 결과표")
-        st.table(pd.DataFrame(results))
+    st.success(f"🎉 채점 완료! 내 점수: {score} / {total} 점")
+    
+    results = []
+    for item in vocab_data:
+        idx = item["번호"]
+        correct = item["단어"]
+        user_input = st.session_state.user_answers.get(idx, "").strip()
+        status = "✅ 정답" if user_input == correct else f"❌ 오답 (정답: {correct})"
+        results.append({
+            "번호": idx,
+            "뜻풀이": item["뜻풀이"],
+            "내가 작성한 답": user_input if user_input else "(미입력)",
+            "결과": status
+        })
+        
+    st.subheader("📋 상세 채점 내역")
+    st.table(pd.DataFrame(results))
