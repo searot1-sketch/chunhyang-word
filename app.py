@@ -25,6 +25,16 @@ st.markdown("""
         color: #7f8c8d;
         margin-bottom: 25px;
     }
+    .vocab-box {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border: 2px solid #4a90e2;
+        margin-bottom: 25px;
+        line-height: 2.2;
+        font-size: 1.05rem;
+        word-break: keep-all;
+    }
     .notice-box {
         background-color: #eef2f7;
         padding: 15px;
@@ -36,9 +46,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="main-title">📜 「춘향전」 단어 찾아 쓰기 학습지</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">중학교 2학년 국어 | 본문을 읽고 뜻풀이에 알맞은 단어를 작성하세요.</div>', unsafe_allow_html=True)
+st.markdown('<div class="sub-title">중학교 2학년 국어 | 상단의 [보기]에서 알맞은 단어를 찾아 뜻풀이 옆 빈칸에 써봅시다.</div>', unsafe_allow_html=True)
 
-# 처음 올려주신 이미지 속 27개 어휘 데이터셋
+# 27개 어휘 데이터셋
 vocab_data = [
     {"번호": 1, "단어": "임기", "뜻풀이": "임무를 맡아 보는 일정한 기간"},
     {"번호": 2, "단어": "부임하다", "뜻풀이": "임명이나 발령을 받아 근무할 곳으로 가다."},
@@ -69,12 +79,16 @@ vocab_data = [
     {"번호": 27, "단어": "하직하다", "뜻풀이": "서울을 떠나는 벼슬아치가 임금에게 작별을 아뢰다."}
 ]
 
+# 보기 상자에 들어갈 27개 단어 목록 생성
+all_words = [item["단어"] for item in vocab_data]
+words_display = " &nbsp;&nbsp;•&nbsp;&nbsp; ".join(all_words)
+
 if 'user_answers' not in st.session_state:
     st.session_state.user_answers = {}
 
 # 학습지 폼 작성
 with st.form(key="vocab_quiz_form"):
-    # 1. 학번 및 이름 입력
+    # 1. 학번 및 이름 입력 (필수)
     st.subheader("👤 학생 정보 입력 (필수)")
     col_id, col_name = st.columns(2)
     with col_id:
@@ -84,8 +98,16 @@ with st.form(key="vocab_quiz_form"):
     
     st.write("---")
 
-    # 2. 어휘 문제 풀기 (27개)
-    st.subheader("✍️ 뜻풀이를 읽고 알맞은 단어를 작성하세요")
+    # 2. 위쪽 보기 상자 제시
+    st.subheader("📋 [ 보기 ]")
+    st.markdown(f"""
+    <div class="vocab-box">
+        {words_display}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. 뜻풀이 및 단어 입력 칸 (27개)
+    st.subheader("✍️ 알맞은 단어 찾아 쓰기")
     
     for item in vocab_data:
         idx = item["번호"]
@@ -99,13 +121,13 @@ with st.form(key="vocab_quiz_form"):
                 f"단어 입력 #{idx}", 
                 key=f"input_{idx}", 
                 label_visibility="collapsed",
-                placeholder="단어 입력"
+                placeholder="단어 작성"
             )
         st.divider()
             
     submit_btn = st.form_submit_button(label="💯 27문제 정답 제출 및 자동 채점")
 
-# 3. 제출 및 결과 출력
+# 4. 제출 및 채점 결과 출력
 if submit_btn:
     if not student_id.strip() or not student_name.strip():
         st.error("⚠️ 상단에 학번과 이름을 먼저 입력한 후 제출해 주세요!")
