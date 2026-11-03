@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import random
 
 # -----------------------------------------------------------------------------
 # [필수] 페이지 설정 (최상단 선언)
@@ -79,9 +80,11 @@ vocab_data = [
     {"번호": 27, "단어": "하직하다", "뜻풀이": "서울을 떠나는 벼슬아치가 임금에게 작별을 아뢰다."}
 ]
 
-# 보기 상자에 들어갈 27개 단어 목록 생성
+# 보기 상자의 단어를 가나다순(ㄱ~ㅎ)으로 정렬하여 문제 순서와 섞이게 만듭니다.
+# (랜덤으로 섞고 싶다면 sorted(...) 대신 random.sample(all_words, len(all_words)) 사용 가능)
 all_words = [item["단어"] for item in vocab_data]
-words_display = " &nbsp;&nbsp;•&nbsp;&nbsp; ".join(all_words)
+shuffled_words = sorted(all_words)
+words_display = " &nbsp;&nbsp;•&nbsp;&nbsp; ".join(shuffled_words)
 
 if 'user_answers' not in st.session_state:
     st.session_state.user_answers = {}
@@ -98,8 +101,8 @@ with st.form(key="vocab_quiz_form"):
     
     st.write("---")
 
-    # 2. 위쪽 보기 상자 제시
-    st.subheader("📋 [ 보기 ]")
+    # 2. 가나다순으로 섞인 보기 상자 제시
+    st.subheader("📋 [ 보기 ] (가나다순 섞음)")
     st.markdown(f"""
     <div class="vocab-box">
         {words_display}
